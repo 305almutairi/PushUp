@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>تحدي الضغط</title>
+<style>
+  :root{
+    --bg: #0d0f0b;
+    --bg-panel: #171a13;
+    --line: #2b2f22;
+    --acid: #d4ff3f;
+    --acid-dim: #8fae2a;
+    --red: #ff4f4f;
+    --blue: #5fb4ff;
+    --text: #eef0e6;
+    --text-dim: #9aa08c;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family: 'Arial Black', 'Helvetica Neue', Arial, sans-serif;
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    overflow-x:hidden;
+  }
+  .num{ font-family: 'Arial Black', Impact, sans-serif; font-weight:900; }
+  .screen{
+    width:100%;
+    max-width:480px;
+    min-height:100vh;
+    padding:20px 18px 32px;
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+  }
+  .hidden{display:none !important;}
+
+  .brand{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    border-bottom:3px solid var(--acid);
+    padding-bottom:10px;
+    margin-bottom:2px;
+  }
+  .brand h1{ font-size:26px; margin:0; letter-spacing:-0.5px; line-height:1; }
+  .brand h1 span{color:var(--acid);}
+  .brand .tag{font-size:11px; color:var(--text-dim); font-weight:400; font-family:Arial, sans-serif;}
+
+  label{ font-size:12px; color:var(--text-dim); font-weight:400; font-family:Arial, sans-serif; margin-bottom:6px; display:block; }
+  input[type=text]{
+    width:100%; background:var(--bg-panel); border:2px solid var(--line); color:var(--text);
+    font-size:20px; padding:12px 14px; border-radius:4px; font-family:Arial, sans-serif; outline:none; text-align:right;
+  }
+  input[type=text]:focus{border-color:var(--acid);}
+  input[type=text]#codeInput{text-align:center; letter-spacing:6px; font-size:26px; text-transform:uppercase;}
+  .field{margin-bottom:2px;}
+
+  .btn{
+    display:block; width:100%; padding:16px; border-radius:4px; border:none;
+    font-size:17px; font-weight:900; font-family:inherit; cursor:pointer; text-align:center;
+  }
+  .btn-primary{background:var(--acid); color:#0d0f0b;}
+  .btn-primary:active{transform:scale(0.98);}
+  .btn-outline{background:transparent; color:var(--text); border:2px solid var(--line);}
+  .btn-bot{background:var(--blue); color:#0d0f0b;}
+  .btn-sm{padding:12px; font-size:14px;}
+  .btn:disabled{opacity:0.4;}
+
+  .divider{ display:flex; align-items:center; gap:10px; color:var(--text-dim); font-size:12px; font-family:Arial, sans-serif; margin:2px 0; }
+  .divider::before, .divider::after{content:""; flex:1; height:1px; background:var(--line);}
+
+  .card{ background:var(--bg-panel); border:1px solid var(--line); border-radius:6px; padding:16px; }
+  .rules{ font-family:Arial, sans-serif; font-size:13px; color:var(--text-dim); line-height:1.7; }
+  .rules b{color:var(--text);}
+
+  .room-code-display{ text-align:center; padding:20px 0; }
+  .room-code-display .label{font-size:12px; color:var(--text-dim); font-family:Arial,sans-serif;}
+  .room-code-display .code{font-size:44px; letter-spacing:10px; color:var(--acid); margin-top:6px;}
+  .waiting-dot{ display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--acid); margin-left:6px; animation:pulse 1s infinite; }
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.2;}}
+
+  .vs-row{ display:flex; justify-content:space-between; align-items:center; font-family:Arial, sans-serif; font-size:14px; color:var(--text-dim); }
+  .video-wrap{ position:relative; width:100%; aspect-ratio: 3/4; background:#000; border-radius:8px; overflow:hidden; border:2px solid var(--line); }
+  video{ width:100%; height:100%; object-fit:cover; transform:scaleX(-1); }
+  .timer-badge{ position:absolute; top:10px; right:10px; background:rgba(13,15,11,0.8); color:var(--acid); padding:6px 12px; border-radius:20px; font-size:18px; border:1px solid var(--acid); }
+  .motion-badge{ position:absolute; bottom:10px; left:10px; background:rgba(13,15,11,0.8); color:var(--text-dim); padding:4px 10px; border-radius:20px; font-size:10px; font-family:Arial,sans-serif; }
+  .calib-badge{ position:absolute; bottom:10px; right:10px; background:rgba(212,255,63,0.15); color:var(--acid); padding:4px 10px; border-radius:20px; font-size:10px; font-family:Arial,sans-serif; border:1px solid var(--acid); }
+
+  .score-row{ display:flex; gap:12px; }
+  .score-box{ flex:1; background:var(--bg-panel); border:2px solid var(--line); border-radius:8px; padding:14px; text-align:center; }
+  .score-box.me{border-color:var(--acid);}
+  .score-box .who{ font-size:11px; color:var(--text-dim); font-family:Arial,sans-serif; margin-bottom:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .score-box .count{font-size:42px; line-height:1;}
+  .score-box.me .count{color:var(--acid);}
+
+  .status-line{ text-align:center; font-family:Arial,sans-serif; font-size:13px; color:var(--text-dim); }
+
+  .result-hero{ text-align:center; padding:30px 10px; }
+  .result-hero .medal{font-size:52px;}
+  .result-hero h2{font-size:30px; margin:10px 0 4px;}
+  .result-hero h2.win{color:var(--acid);}
+  .result-hero h2.lose{color:var(--red);}
+  .result-hero p{color:var(--text-dim); font-family:Arial,sans-serif; font-size:14px; margin:0;}
+  .final-scores{display:flex; gap:12px; margin-top:6px;}
+
+  .footer-note{ text-align:center; font-family:Arial,sans-serif; font-size:11px; color:var(--text-dim); opacity:0.7; }
+
+  #countdownOverlay{ position:fixed; inset:0; background:rgba(13,15,11,0.92); display:flex; align-items:center; justify-content:center; z-index:50; }
+  #countdownOverlay .cd-num{font-size:120px; color:var(--acid);}
+  #countdownOverlay .cd-label{position:absolute; bottom:20%; font-family:Arial,sans-serif; color:var(--text-dim); font-size:13px; text-align:center; width:100%;}
+
+  .diff-row{ display:flex; gap:10px; }
+  .diff-btn{ flex:1; padding:16px 8px; border-radius:6px; border:2px solid var(--line); background:var(--bg-panel); color:var(--text); font-family:Arial,sans-serif; font-weight:700; font-size:14px; cursor:pointer; }
+  .diff-btn small{display:block; font-weight:400; color:var(--text-dim); font-size:11px; margin-top:4px;}
+  .diff-btn.sel{border-color:var(--blue); color:var(--blue);}
+
+  .spinner{
+    width:40px; height:40px; border-radius:50%;
+    border:4px solid var(--line); border-top-color:var(--acid);
+    animation:spin 0.9s linear infinite; margin:10px auto;
+  }
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .search-time{ text-align:center; font-family:Arial,sans-serif; color:var(--text-dim); font-size:12px; }
+</style>
+</head>
+<body>
+
+<!-- ============ SCREEN 1: HOME ============ -->
+<div class="screen" id="screenHome">
+  <div class="brand">
+    <h1>تحدي <span>الضغط</span></h1>
+    <div class="tag">دقيقة واحدة. أعلى عدد يفوز.</div>
+  </div>
+
+  <div class="card rules">
+    افتح الكاميرا واعمل ضغط لمدة <b>60 ثانية</b> — العداد يتابع حركتك تلقائيًا بنظام يميّز بداية الحركة ونهايتها عشان ما يخطئ بالعد.
+  </div>
+
+  <div class="field">
+    <label>اسمك</label>
+    <input type="text" id="nameInput" placeholder="اكتب اسمك" maxlength="16">
+  </div>
+
+  <button class="btn btn-primary" id="quickMatchBtn">🔍 ابحث عن لاعب أونلاين</button>
+  <button class="btn btn-bot" id="vsBotBtn">🤖 تحدي ضد بوت</button>
+
+  <div class="divider">أو العب مع صديق بكود خاص</div>
+
+  <button class="btn btn-outline" id="createRoomBtn">إنشاء غرفة خاصة</button>
+  <div class="field">
+    <label>كود الغرفة</label>
+    <input type="text" id="codeInput" placeholder="XXXX" maxlength="4">
+  </div>
+  <button class="btn btn-outline" id="joinRoomBtn">الانضمام إلى غرفة</button>
+
+  <div class="footer-note">يحتاج إذن الكاميرا. لا يتم تسجيل أو مشاركة أي فيديو — فقط الاسم وعدد التكرارات.</div>
+</div>
+
+<!-- ============ SCREEN: SEARCHING (quick match) ============ -->
+<div class="screen hidden" id="screenSearch">
+  <div class="brand"><h1>جاري <span>البحث</span></h1></div>
+  <div class="card" style="text-align:center;">
+    <div class="spinner"></div>
+    <div class="status-line">نبحث لك عن خصم متاح الآن...</div>
+    <div class="search-time" id="searchTime">00:00</div>
+  </div>
+  <button class="btn btn-bot" id="searchVsBotBtn">🤖 العب ضد بوت الآن بدل الانتظار</button>
+  <button class="btn btn-outline" id="cancelSearchBtn">إلغاء البحث</button>
+</div>
+
+<!-- ============ SCREEN: BOT DIFFICULTY ============ -->
+<div class="screen hidden" id="screenBotSetup">
+  <div class="brand"><h1>اختر <span>مستوى البوت</span></h1></div>
+  <div class="diff-row">
+    <button class="diff-btn" data-diff="easy">سهل<small>وتيرة بطيئة</small></button>
+    <button class="diff-btn" data-diff="medium">متوسط<small>وتيرة معتدلة</small></button>
+    <button class="diff-btn" data-diff="hard">صعب<small>وتيرة سريعة</small></button>
+  </div>
+  <button class="btn btn-primary" id="botContinueBtn" disabled>متابعة</button>
+  <button class="btn btn-outline" id="botBackBtn">رجوع</button>
+</div>
+
+<!-- ============ SCREEN 2: WAITING ROOM (private code) ============ -->
+<div class="screen hidden" id="screenWait">
+  <div class="brand"><h1>غرفة <span>الانتظار</span></h1></div>
+  <div class="card room-code-display">
+    <div class="label">شارك هذا الكود مع خصمك</div>
+    <div class="code" id="displayCode">----</div>
+  </div>
+  <div class="status-line"><span class="waiting-dot"></span><span id="waitStatus">بانتظار انضمام الخصم...</span></div>
+  <button class="btn btn-outline" id="cancelWaitBtn">إلغاء</button>
+</div>
+
+<!-- ============ SCREEN 3: READY ============ -->
+<div class="screen hidden" id="screenReady">
+  <div class="brand"><h1>جاهز <span>للمعركة</span></h1></div>
+  <div class="vs-row">
+    <span id="readyMeName">أنت</span>
+    <span>VS</span>
+    <span id="readyOppName">الخصم</span>
+  </div>
+  <div class="video-wrap">
+    <video id="previewVideo" autoplay playsinline muted></video>
+  </div>
+  <div class="rules">تأكد إن الكاميرا شايفة كتفينك وصدرك بوضوح، وابعد الكاميرا عنك مسافة كافية حتى تظهر حركة جسمك بالكامل قبل البدء.</div>
+  <button class="btn btn-primary" id="startBtn">ابدأ التحدي (60 ثانية)</button>
+</div>
+
+<!-- ============ SCREEN 4: GAME ============ -->
+<div class="screen hidden" id="screenGame">
+  <div class="vs-row">
+    <span id="gameMeName">أنت</span>
+    <span id="gameOppName">الخصم</span>
+  </div>
+  <div class="video-wrap">
+    <video id="gameVideo" autoplay playsinline muted></video>
+    <div class="timer-badge num" id="timerBadge">60</div>
+    <div class="calib-badge hidden" id="calibBadge">معايرة...</div>
+    <div class="motion-badge" id="motionBadge">جاهز للحركة</div>
+  </div>
+  <div class="score-row">
+    <div class="score-box me">
+      <div class="who" id="scoreMeName">أنت</div>
+      <div class="count num" id="myCount">0</div>
+    </div>
+    <div class="score-box">
+      <div class="who" id="scoreOppName">الخصم</div>
+      <div class="count num" id="oppCount">0</div>
+    </div>
+  </div>
+  <div class="status-line">انزل وارجع طلوع كامل بكل مرة — العداد يحسب الدورة الكاملة فقط</div>
+</div>
+
+<!-- ============ SCREEN 5: RESULT ============ -->
+<div class="screen hidden" id="screenResult">
+  <div class="brand"><h1>النتيجة <span>النهائية</span></h1></div>
+  <div class="card result-hero">
+    <div class="medal" id="resultMedal">🏆</div>
+    <h2 id="resultTitle" class="win">فزت!</h2>
+    <p id="resultSub">أحسنت</p>
+  </div>
+  <div class="final-scores">
+    <div class="score-box me">
+      <div class="who" id="finalMeName">أنت</div>
+      <div class="count num" id="finalMyCount">0</div>
+    </div>
+    <div class="score-box">
+      <div class="who" id="finalOppName">الخصم</div>
+      <div class="count num" id="finalOppCount">0</div>
+    </div>
+  </div>
+  <button class="btn btn-primary" id="rematchBtn">جولة جديدة</button>
+  <button class="btn btn-outline" id="homeBtn">الرجوع للرئيسية</button>
+</div>
+
+<!-- ============ COUNTDOWN OVERLAY ============ -->
+<div id="countdownOverlay" class="hidden">
+  <div class="cd-num num" id="cdNum">3</div>
+  <div class="cd-label">خذ وضعية البداية الآن</div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  // ---------- State ----------
+  let myName = "أنت";
+  let oppName = "الخصم";
+  let roomCode = null;
+  let isHost = false;
+  let mode = 'private'; // 'private' | 'quick' | 'bot'
+  let botDifficulty = 'medium';
+  let myId = null;
+  let stream = null;
+  let pollTimer = null;
+  let searchTimer = null;
+  let searchStartTs = 0;
+  let searchActive = false;
+  let gameTimer = null;
+  let countdownTimer = null;
+  let timeLeft = 60;
+  let myCount = 0;
+  let oppCountVal = 0;
+  let gameOver = false;
+  let startSignalSeen = false;
+  let botTimeoutHandle = null;
+
+  // ---------- Motion detection (state-machine rep counter) ----------
+  let canvasEl = document.createElement('canvas');
+  let ctx = canvasEl.getContext('2d', {willReadFrequently:true});
+  const SAMPLE_W = 48, SAMPLE_H = 48;
+  canvasEl.width = SAMPLE_W;
+  canvasEl.height = SAMPLE_H;
+  let prevFrame = null;
+  let rafId = null;
+  let lastSampleTs = 0;
+  const SAMPLE_INTERVAL = 70; // ms, ~14fps sampling is plenty for pushup cadence
+
+  const WINDOW_SIZE = 40; // ~2.8s of history at 70ms/sample
+  let energyWindow = [];
+  let repState = 'top'; // top -> descending -> bottom -> ascending -> top(+1)
+  let lastStateChangeTs = 0;
+  let lastRepTs = 0;
+  const MIN_REP_INTERVAL = 550;   // ms, fastest realistic full rep
+  const MAX_PHASE_STUCK = 4500;   // ms, if stuck in a phase this long, reset (lost tracking)
+  const MIN_RANGE_TO_COUNT = 90;  // ignore near-static/noise-only signal
+  let countingEnabled = false;
+
+  // ---------- Helpers ----------
+  function $(id){ return document.getElementById(id); }
+  function show(id){
+    ['screenHome','screenSearch','screenBotSetup','screenWait','screenReady','screenGame','screenResult'].forEach(s=>{
+      $(s).classList.toggle('hidden', s !== id);
+    });
+  }
+  function randCode(){
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let c = '';
+    for(let i=0;i<4;i++) c += chars[Math.floor(Math.random()*chars.length)];
+    return c;
+  }
+  function randId(){
+    return 'p' + Math.random().toString(36).slice(2,10);
+  }
+  function roomKey(code){ return 'pushup_room_' + code; }
+  function queueKey(id){ return 'pushup_queue_' + id; }
+  function notifyKey(id){ return 'pushup_notify_' + id; }
+
+  async function readRoom(code){
+    try{ const res = await window.storage.get(roomKey(code), true); return res ? JSON.parse(res.value) : null; }
+    catch(e){ return null; }
+  }
+  async function writeRoom(code, data){
+    try{ await window.storage.set(roomKey(code), JSON.stringify(data), true); }
+    catch(e){ /* ignore */ }
+  }
+
+  // ---------- Camera ----------
+  async function startCamera(videoEl){
+    if(stream){ videoEl.srcObject = stream; return true; }
+    try{
+      stream = await navigator.mediaDevices.getUserMedia({video:{facingMode:'user', width:{ideal:640}, height:{ideal:480}}, audio:false});
+      videoEl.srcObject = stream;
+      return true;
+    }catch(e){
+      alert('تعذر الوصول إلى الكاميرا. تأكد من إعطاء الإذن.');
+      return false;
+    }
+  }
+
+  // ---------- Rep counting engine ----------
+  function resetMotionState(){
+    prevFrame = null;
+    energyWindow = [];
+    repState = 'top';
+    lastStateChangeTs = performance.now();
+    lastRepTs = 0;
+    myCount = 0;
+    countingEnabled = false;
+    $('myCount').textContent = '0';
+    $('calibBadge').classList.remove('hidden');
+    $('motionBadge').textContent = 'جاهز للحركة';
+  }
+
+  function sampleFrame(videoEl){
+    if(videoEl.readyState < 2) return null;
+    ctx.drawImage(videoEl, 0, 0, SAMPLE_W, SAMPLE_H);
+    return ctx.getImageData(0,0,SAMPLE_W,SAMPLE_H).data;
+  }
+
+  function frameEnergy(a, b){
+    // sum of abs luma-channel differences, sampled every 4th pixel for speed
+    let sum = 0;
+    for(let i=0;i<a.length;i+=16){
+      sum += Math.abs(a[i]-b[i]);
+    }
+    return sum;
+  }
+
+  function processEnergy(e, now){
+    energyWindow.push(e);
+    if(energyWindow.length > WINDOW_SIZE) energyWindow.shift();
+    if(energyWindow.length < 8) return; // not enough history yet
+
+    let mn = Math.min(...energyWindow);
+    let mx = Math.max(...energyWindow);
+    const range = mx - mn;
+
+    // stop showing "calibrating" once we have a real range to work with
+    if(range > MIN_RANGE_TO_COUNT && $('calibBadge')) $('calibBadge').classList.add('hidden');
+
+    if(range < MIN_RANGE_TO_COUNT){
+      // not enough real movement in the window -> don't evaluate state machine this tick
+      if(now - lastStateChangeTs > MAX_PHASE_STUCK){
+        repState = 'top';
+        lastStateChangeTs = now;
+      }
+      return;
+    }
+
+    const thHigh = mn + range * 0.55;
+    const thLow  = mn + range * 0.32;
+
+    // stuck-phase watchdog: if we've been waiting in a transitional phase too long, reset to 'top'
+    if(repState !== 'top' && (now - lastStateChangeTs) > MAX_PHASE_STUCK){
+      repState = 'top';
+      lastStateChangeTs = now;
+    }
+
+    if(!countingEnabled) return;
+
+    switch(repState){
+      case 'top':
+        if(e > thHigh){
+          repState = 'descending';
+          lastStateChangeTs = now;
+          $('motionBadge').textContent = 'نازل...';
+        }
+        break;
+      case 'descending':
+        if(e < thLow){
+          repState = 'bottom';
+          lastStateChangeTs = now;
+          $('motionBadge').textContent = 'في الأسفل';
+        }
+        break;
+      case 'bottom':
+        if(e > thHigh){
+          repState = 'ascending';
+          lastStateChangeTs = now;
+          $('motionBadge').textContent = 'طالع...';
+        }
+        break;
+      case 'ascending':
+        if(e < thLow){
+          if((now - lastRepTs) > MIN_REP_INTERVAL){
+            myCount++;
+            $('myCount').textContent = myCount;
+            $('motionBadge').textContent = 'تكرار ✓';
+            lastRepTs = now;
+          }
+          repState = 'top';
+          lastStateChangeTs = now;
+        }
+        break;
+    }
+  }
+
+  function motionLoop(videoEl){
+    const now = performance.now();
+    if(now - lastSampleTs >= SAMPLE_INTERVAL){
+      lastSampleTs = now;
+      const frame = sampleFrame(videoEl);
+      if(frame){
+        if(prevFrame){
+          const e = frameEnergy(frame, prevFrame);
+          processEnergy(e, now);
+        }
+        prevFrame = frame;
+      }
+    }
+    rafId = requestAnimationFrame(()=>motionLoop(videoEl));
+  }
+  function stopMotionLoop(){ if(rafId){ cancelAnimationFrame(rafId); rafId = null; } }
+
+  // ---------- Room sync (private code + quick match share this) ----------
+  async function pollOpponent(){
+    if(mode === 'bot' || !roomCode) return;
+    const data = await readRoom(roomCode);
+    if(!data) return;
+    const oppSlot = isHost ? 'guest' : 'host';
+
+    if(data[oppSlot] && data[oppSlot].name){
+      oppName = data[oppSlot].name;
+      ['readyOppName','gameOppName','scoreOppName','finalOppName'].forEach(id=>{ if($(id)) $(id).textContent = oppName; });
+    }
+    if(data[oppSlot]) oppCountVal = data[oppSlot].count || 0;
+
+    if(!$('screenWait').classList.contains('hidden')){
+      if(data.host && data.guest){
+        $('waitStatus').textContent = 'انضم الخصم! جاري التجهيز...';
+        oppName = isHost ? data.guest.name : data.host.name;
+        goToReady();
+      }
+    }
+    if(!$('screenReady').classList.contains('hidden')){
+      if(data.status === 'countdown' && !startSignalSeen){
+        startSignalSeen = true;
+        beginCountdown();
+      }
+    }
+    if(!$('screenGame').classList.contains('hidden')){
+      $('oppCount').textContent = oppCountVal;
+      if(data.status === 'finished' && !gameOver) finishGame();
+    }
+    if(!$('screenResult').classList.contains('hidden')){
+      $('finalOppCount').textContent = oppCountVal;
+    }
+  }
+  function startPolling(){
+    if(pollTimer) clearInterval(pollTimer);
+    pollTimer = setInterval(pollOpponent, 900);
+  }
+  async function pushMyCount(){
+    if(mode === 'bot' || !roomCode) return;
+    const data = await readRoom(roomCode);
+    if(!data) return;
+    const mySlot = isHost ? 'host' : 'guest';
+    if(!data[mySlot]) data[mySlot] = {};
+    data[mySlot].name = myName;
+    data[mySlot].count = myCount;
+    await writeRoom(roomCode, data);
+  }
+
+  // ---------- Home: private room ----------
+  $('createRoomBtn').addEventListener('click', async ()=>{
+    myName = $('nameInput').value.trim() || 'أنت';
+    mode = 'private';
+    roomCode = randCode();
+    isHost = true;
+    await writeRoom(roomCode, {host:{name:myName, count:0}, guest:null, status:'waiting'});
+    $('displayCode').textContent = roomCode;
+    show('screenWait');
+    startPolling();
+  });
+
+  $('joinRoomBtn').addEventListener('click', async ()=>{
+    myName = $('nameInput').value.trim() || 'أنت';
+    const code = $('codeInput').value.trim().toUpperCase();
+    if(code.length !== 4){ alert('اكتب كود مكوّن من 4 أحرف/أرقام'); return; }
+    const data = await readRoom(code);
+    if(!data){ alert('ما لقينا هذه الغرفة. تأكد من الكود.'); return; }
+    mode = 'private';
+    roomCode = code;
+    isHost = false;
+    data.guest = {name: myName, count:0};
+    await writeRoom(roomCode, data);
+    oppName = data.host.name;
+    goToReady();
+    startPolling();
+  });
+
+  $('cancelWaitBtn').addEventListener('click', ()=>{
+    if(pollTimer) clearInterval(pollTimer);
+    show('screenHome');
+  });
+
+  // ---------- Home: quick match (search for anyone online) ----------
+  $('quickMatchBtn').addEventListener('click', async ()=>{
+    myName = $('nameInput').value.trim() || 'أنت';
+    mode = 'quick';
+    myId = randId();
+    startQuickSearch();
+  });
+
+  async function startQuickSearch(){
+    show('screenSearch');
+    searchActive = true;
+    searchStartTs = Date.now();
+    $('searchTime').textContent = '00:00';
+    searchTimer = setInterval(quickSearchTick, 1500);
+    quickSearchTick(); // run immediately
+  }
+
+  async function quickSearchTick(){
+    if(!searchActive) return;
+    const elapsed = Math.floor((Date.now() - searchStartTs)/1000);
+    const mm = String(Math.floor(elapsed/60)).padStart(2,'0');
+    const ss = String(elapsed%60).padStart(2,'0');
+    $('searchTime').textContent = mm+':'+ss;
+
+    // 1) did someone already match with me while I was waiting in the queue?
+    try{
+      const note = await window.storage.get(notifyKey(myId), true);
+      if(note){
+        const info = JSON.parse(note.value);
+        await window.storage.delete(notifyKey(myId), true).catch(()=>{});
+        await window.storage.delete(queueKey(myId), true).catch(()=>{});
+        stopQuickSearch();
+        roomCode = info.roomCode;
+        isHost = false;
+        goToReady();
+        startPolling();
+        return;
+      }
+    }catch(e){ /* no notification yet */ }
+
+    // 2) look for someone else already waiting
+    try{
+      const listRes = await window.storage.list('pushup_queue_', true);
+      const keys = (listRes && listRes.keys) ? listRes.keys : [];
+      for(const k of keys){
+        if(k === queueKey(myId)) continue;
+        let entry;
+        try{
+          const r = await window.storage.get(k, true);
+          if(!r) continue;
+          entry = JSON.parse(r.value);
+        }catch(e){ continue; }
+        const age = Date.now() - entry.ts;
+        if(age > 30000){
+          await window.storage.delete(k, true).catch(()=>{}); // stale, clean up
+          continue;
+        }
+        // found a live candidate -> claim them
+        await window.storage.delete(k, true).catch(()=>{});
+        await window.storage.delete(queueKey(myId), true).catch(()=>{});
+        const newRoom = randCode();
+        await writeRoom(newRoom, {host:{name:myName, count:0}, guest:{name:entry.name, count:0}, status:'waiting-ready'});
+        await window.storage.set(notifyKey(entry.id), JSON.stringify({roomCode:newRoom}), true).catch(()=>{});
+        stopQuickSearch();
+        roomCode = newRoom;
+        isHost = true;
+        oppName = entry.name;
+        goToReady();
+        startPolling();
+        return;
+      }
+    }catch(e){ /* registry list failed, just keep waiting */ }
+
+    // 3) no one found yet -> make sure I'm visible in the queue
+    await window.storage.set(queueKey(myId), JSON.stringify({id:myId, name:myName, ts:Date.now()}), true).catch(()=>{});
+
+    // 4) give up after ~35s and suggest bot
+    if(elapsed >= 35){
+      stopQuickSearch();
+      window.storage.delete(queueKey(myId), true).catch(()=>{});
+      alert('ما لقينا لاعب متاح حالياً. جرّب تتحدى بوت بدل الانتظار.');
+      show('screenHome');
+    }
+  }
+
+  function stopQuickSearch(){
+    searchActive = false;
+    if(searchTimer){ clearInterval(searchTimer); searchTimer = null; }
+  }
+
+  $('cancelSearchBtn').addEventListener('click', ()=>{
+    stopQuickSearch();
+    if(myId) window.storage.delete(queueKey(myId), true).catch(()=>{});
+    show('screenHome');
+  });
+
+  $('searchVsBotBtn').addEventListener('click', ()=>{
+    stopQuickSearch();
+    if(myId) window.storage.delete(queueKey(myId), true).catch(()=>{});
+    myName = $('nameInput').value.trim() || myName || 'أنت';
+    show('screenBotSetup');
+  });
+
+  // ---------- Home: vs bot ----------
+  let selectedDiff = null;
+  $('vsBotBtn').addEventListener('click', ()=>{
+    myName = $('nameInput').value.trim() || 'أنت';
+    show('screenBotSetup');
+  });
+  document.querySelectorAll('.diff-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('.diff-btn').forEach(b=>b.classList.remove('sel'));
+      btn.classList.add('sel');
+      selectedDiff = btn.dataset.diff;
+      $('botContinueBtn').disabled = false;
+    });
+  });
+  $('botBackBtn').addEventListener('click', ()=> show('screenHome'));
+  $('botContinueBtn').addEventListener('click', ()=>{
+    if(!selectedDiff) return;
+    botDifficulty = selectedDiff;
+    mode = 'bot';
+    roomCode = null;
+    isHost = true;
+    const labels = {easy:'بوت 🤖 (سهل)', medium:'بوت 🤖 (متوسط)', hard:'بوت 🤖 (صعب)'};
+    oppName = labels[botDifficulty];
+    goToReady();
+  });
+
+  // ---------- Ready screen ----------
+  async function goToReady(){
+    $('readyMeName').textContent = myName;
+    $('readyOppName').textContent = oppName;
+    show('screenReady');
+    await startCamera($('previewVideo'));
+  }
+
+  $('startBtn').addEventListener('click', async ()=>{
+    if(mode === 'private' || mode === 'quick'){
+      if(isHost){
+        const data = await readRoom(roomCode);
+        if(data){ data.status = 'countdown'; await writeRoom(roomCode, data); }
+      }
+      startSignalSeen = true;
+    }
+    beginCountdown();
+  });
+
+  // ---------- Countdown ----------
+  function beginCountdown(){
+    $('countdownOverlay').classList.remove('hidden');
+    let n = 3;
+    $('cdNum').textContent = n;
+    countdownTimer = setInterval(()=>{
+      n--;
+      if(n <= 0){
+        clearInterval(countdownTimer);
+        $('countdownOverlay').classList.add('hidden');
+        beginGame();
+      } else {
+        $('cdNum').textContent = n;
+      }
+    }, 800);
+  }
+
+  // ---------- Bot rep simulation ----------
+  const DIFF_PACE = {
+    easy:   {min:1700, max:2500},
+    medium: {min:1100, max:1700},
+    hard:   {min:750,  max:1250}
+  };
+  function scheduleBotRep(){
+    const pace = DIFF_PACE[botDifficulty] || DIFF_PACE.medium;
+    const delay = pace.min + Math.random()*(pace.max - pace.min);
+    botTimeoutHandle = setTimeout(()=>{
+      if(gameOver) return;
+      oppCountVal++;
+      $('oppCount').textContent = oppCountVal;
+      scheduleBotRep();
+    }, delay);
+  }
+  function stopBot(){ if(botTimeoutHandle){ clearTimeout(botTimeoutHandle); botTimeoutHandle=null; } }
+
+  // ---------- Game ----------
+  async function beginGame(){
+    gameOver = false;
+    timeLeft = 60;
+    resetMotionState();
+    oppCountVal = mode === 'bot' ? 0 : (oppCountVal || 0);
+    $('gameMeName').textContent = myName;
+    $('scoreMeName').textContent = myName;
+    $('gameOppName').textContent = oppName;
+    $('scoreOppName').textContent = oppName;
+    $('oppCount').textContent = oppCountVal;
+    $('timerBadge').textContent = timeLeft;
+    show('screenGame');
+
+    await startCamera($('gameVideo'));
+    motionLoop($('gameVideo'));
+
+    // brief real calibration window using live camera before counting starts
+    setTimeout(()=>{ countingEnabled = true; }, 900);
+
+    if(mode === 'bot') scheduleBotRep();
+
+    gameTimer = setInterval(async ()=>{
+      timeLeft--;
+      $('timerBadge').textContent = timeLeft;
+      if(mode !== 'bot') await pushMyCount();
+      if(timeLeft <= 0){
+        clearInterval(gameTimer);
+        await finalizeMyResult();
+      }
+    }, 1000);
+  }
+
+  async function finalizeMyResult(){
+    if(mode !== 'bot'){
+      await pushMyCount();
+      const data = await readRoom(roomCode);
+      if(data){
+        const mySlot = isHost ? 'host' : 'guest';
+        data[mySlot].done = true;
+        if(data.host && data.guest && data.host.done && data.guest.done) data.status = 'finished';
+        await writeRoom(roomCode, data);
+      }
+    }
+    finishGame();
+  }
+
+  function finishGame(){
+    if(gameOver) return;
+    gameOver = true;
+    stopMotionLoop();
+    stopBot();
+    clearInterval(gameTimer);
+
+    $('finalMeName').textContent = myName;
+    $('finalOppName').textContent = oppName;
+    $('finalMyCount').textContent = myCount;
+    $('finalOppCount').textContent = oppCountVal;
+
+    if(myCount > oppCountVal){
+      $('resultMedal').textContent = '🏆';
+      $('resultTitle').textContent = 'فزت!';
+      $('resultTitle').className = 'win';
+      $('resultSub').textContent = 'أداء قوي — استمر على هذا المستوى';
+    } else if(myCount < oppCountVal){
+      $('resultMedal').textContent = '💪';
+      $('resultTitle').textContent = 'خسرت هالجولة';
+      $('resultTitle').className = 'lose';
+      $('resultSub').textContent = 'جولة ثانية وبتفوز';
+    } else {
+      $('resultMedal').textContent = '🤝';
+      $('resultTitle').textContent = 'تعادل!';
+      $('resultTitle').className = 'win';
+      $('resultSub').textContent = 'نفس العدد بالضبط';
+    }
+    show('screenResult');
+  }
+
+  // ---------- Rematch / Home ----------
+  $('rematchBtn').addEventListener('click', async ()=>{
+    startSignalSeen = false;
+    if(mode === 'bot'){
+      goToReady();
+      return;
+    }
+    if(!roomCode){ show('screenHome'); return; }
+    if(isHost){
+      await writeRoom(roomCode, {host:{name:myName, count:0}, guest:{name:oppName, count:0}, status:'waiting-ready'});
+    }
+    goToReady();
+  });
+
+  $('homeBtn').addEventListener('click', ()=>{
+    if(pollTimer) clearInterval(pollTimer);
+    stopQuickSearch();
+    if(stream){ stream.getTracks().forEach(t=>t.stop()); stream = null; }
+    roomCode = null;
+    mode = 'private';
+    show('screenHome');
+  });
+
+  $('codeInput').addEventListener('input', (e)=>{ e.target.value = e.target.value.toUpperCase(); });
+
+})();
+</script>
+</body>
+</html>
